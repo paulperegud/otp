@@ -148,6 +148,8 @@ extern int erts_sched_thread_suggested_stack_size;
   (((Uint32) 1) << (ERTS_RUNQ_FLG_BASE2 + 3))
 #define ERTS_RUNQ_FLG_INACTIVE \
   (((Uint32) 1) << (ERTS_RUNQ_FLG_BASE2 + 4))
+#define ERTS_RUNQ_FLG_NONEMPTY \
+  (((Uint32) 1) << (ERTS_RUNQ_FLG_BASE2 + 5))
 
 #define ERTS_RUNQ_FLGS_MIGRATION_QMASKS	\
   (ERTS_RUNQ_FLGS_EMIGRATE_QMASK	\
@@ -185,6 +187,9 @@ extern int erts_sched_thread_suggested_stack_size;
   ((FLGS) |= ERTS_RUNQ_FLG_EVACUATE((PRIO)))
 #define ERTS_UNSET_RUNQ_FLG_EVACUATE(FLGS, PRIO) \
   ((FLGS) &= ~ERTS_RUNQ_FLG_EVACUATE((PRIO)))
+
+#define ERTS_RUNQ_IFLGS_GET(RQ)						\
+    ((Uint32) erts_smp_atomic32_read_acqb(&(RQ)->info_flags))
 
 #define ERTS_RUNQ_IFLG_SUSPENDED		(((erts_aint32_t) 1) << 0)
 #define ERTS_RUNQ_IFLG_NONEMPTY			(((erts_aint32_t) 1) << 1)
@@ -369,6 +374,10 @@ struct ErtsRunQueue_ {
 	struct port *end;
     } ports;
 };
+
+#ifdef ERTS_SMP
+extern long erts_runq_supervision_interval;
+#endif
 
 typedef union {
     ErtsRunQueue runq;
