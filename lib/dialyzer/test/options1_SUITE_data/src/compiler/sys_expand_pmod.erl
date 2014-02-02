@@ -3,17 +3,17 @@
 %% compliance with the License. You should have received a copy of the
 %% Erlang Public License along with this software. If not, it can be
 %% retrieved via the world wide web at http://www.erlang.org/.
-%%
+%% 
 %% Software distributed under the License is distributed on an "AS IS"
 %% basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
 %% the License for the specific language governing rights and limitations
 %% under the License.
-%%
+%% 
 %% The Initial Developer of the Original Code is Ericsson Utvecklings AB.
 %% Portions created by Ericsson are Copyright 1999, Ericsson Utvecklings
 %% AB. All Rights Reserved.''
-%%
-%%     $Id: sys_expand_pmod.erl,v 1.1 2008/12/17 09:53:42 mikpe Exp $
+%% 
+%%     $Id: sys_expand_pmod.erl,v 1.4 2004/11/14 15:35:35 richardc Exp $
 %%
 -module(sys_expand_pmod).
 
@@ -218,15 +218,10 @@ gexpr({call,Line,{atom,La,F},As0},St) ->
 	true -> As1 = gexpr_list(As0,St),
 		{call,Line,{atom,La,F},As1}
     end;
-% Pre-expansion generated calls to erlang:is_record/3 must also be handled
-gexpr({call,Line,{remote,La,{atom,Lb,erlang},{atom,Lc,is_record}},As0},St)
-  when length(As0) == 3 ->
-    As1 = gexpr_list(As0,St),
-    {call,Line,{remote,La,{atom,Lb,erlang},{atom,Lc,is_record}},As1};
 % Guard bif's can be remote, but only in the module erlang...
 gexpr({call,Line,{remote,La,{atom,Lb,erlang},{atom,Lc,F}},As0},St) ->
     case erl_internal:guard_bif(F, length(As0)) or
-	 erl_internal:arith_op(F, length(As0)) or
+	 erl_internal:arith_op(F, length(As0)) or 
 	 erl_internal:comp_op(F, length(As0)) or
 	 erl_internal:bool_op(F, length(As0)) of
 	true -> As1 = gexpr_list(As0,St),
@@ -235,7 +230,7 @@ gexpr({call,Line,{remote,La,{atom,Lb,erlang},{atom,Lc,F}},As0},St) ->
 % Unfortunately, writing calls as {M,F}(...) is also allowed.
 gexpr({call,Line,{tuple,La,[{atom,Lb,erlang},{atom,Lc,F}]},As0},St) ->
     case erl_internal:guard_bif(F, length(As0)) or
-	 erl_internal:arith_op(F, length(As0)) or
+	 erl_internal:arith_op(F, length(As0)) or 
 	 erl_internal:comp_op(F, length(As0)) or
 	 erl_internal:bool_op(F, length(As0)) of
 	true -> As1 = gexpr_list(As0,St),
@@ -245,14 +240,14 @@ gexpr({bin,Line,Fs},St) ->
     Fs2 = pattern_grp(Fs,St),
     {bin,Line,Fs2};
 gexpr({op,Line,Op,A0},St) ->
-    case erl_internal:arith_op(Op, 1) or
+    case erl_internal:arith_op(Op, 1) or 
 	 erl_internal:bool_op(Op, 1) of
 	true -> A1 = gexpr(A0,St),
 		{op,Line,Op,A1}
     end;
 gexpr({op,Line,Op,L0,R0},St) ->
     case erl_internal:arith_op(Op, 2) or
-	  erl_internal:bool_op(Op, 2) or
+	  erl_internal:bool_op(Op, 2) or 
 	  erl_internal:comp_op(Op, 2) of
 	true ->
 	    L1 = gexpr(L0,St),
@@ -336,13 +331,13 @@ expr({'fun',Line,Body,Info},St) ->
 		    As1 = As ++ [{var,Line,'THIS'}],
 		    Call = {call,Line,{atom,Line,F1},As1},
 		    Cs = [{clause,Line,As,[],[Call]}],
-		    {'fun',Line,{clauses,Cs},Info}
+		    {Index,Uniq,Name} = Info,
+		    Info1 = {Index,Uniq,crap,crap,Name},
+		    {'fun',Line,{clauses,Cs},Info1}
 	    end;
 	{function,M,F,A} ->			%This is an error in lint!
 	    {'fun',Line,{function,M,F,A},Info}
     end;
-expr({named_fun,Loc,Name,Cs,Info},St) ->
-    {named_fun,Loc,Name,fun_clauses(Cs, St),Info};
 expr({call,Lc,{atom,_,new}=Name,As0},#pmod{parameters=Ps}=St)
   when length(As0) =:= length(Ps) ->
     %% The new() function does not take a 'THIS' argument (it's static).
