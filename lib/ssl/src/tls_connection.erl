@@ -2355,9 +2355,21 @@ write_application_data(Data0, From, #state{socket = Socket,
 				    renegotiation = {true, internal}});
 	false ->
 	    {Msgs, ConnectionStates} = ssl_record:encode_data(Data, Version, ConnectionStates0),
-	    Result = Transport:send(Socket, Msgs),
-	    {reply, Result,
-	     connection, State#state{connection_states = ConnectionStates}, get_timeout(State)}
+        Active = case erlang:port_info(Socket, queue_size) of
+                     Size when Size > 8192 ->
+                         {ok, [{active, A}]} = inet:getopts(Socket, [active]),
+                         inet:setopts(Socket, [{active,true}]),
+                         A;
+                     _ ->
+                         undefined
+                 end,
+        Result = Transport:send(Socket, Msgs),
+        case Active of
+            undefined -> ok;
+            _ -> inet:setopts(Socket, [{active,Active}])
+        end,
+        {reply, Result,
+         connection, State#state{connection_states = ConnectionStates}, get_timeout(State)}
     end.
 
 time_to_renegotiate(_Data, #connection_states{current_write = 
