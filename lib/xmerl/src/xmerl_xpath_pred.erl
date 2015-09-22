@@ -435,7 +435,7 @@ string_value(N=#xmlObj{}) ->
 %% al decsendant text nodes) and attribute nodes (normalized value).
 string_value(A=#xmlNode{type=attribute}) ->
     #xmlAttribute{value=AttVal}=A#xmlNode.node,
-    ?string(AttVal);
+    string_value(AttVal);
 string_value(N=#xmlNode{type=namespace}) ->
     #xmlNsNode{uri=URI}=N#xmlNode.node,
     ?string(atom_to_list(URI));
@@ -462,6 +462,8 @@ string_value(N) when is_integer(N) ->
 string_value(N) when is_float(N) ->
     N1 = round(N * 10000000000000000),
     ?string(strip_zeroes(integer_to_list(N1)));
+string_value(Bin) when is_binary(Bin) ->
+    ?string(binary_to_list(Bin));
 string_value(Str) when is_list(Str) ->
     ?string(Str).
 
